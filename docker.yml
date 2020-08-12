@@ -1,0 +1,45 @@
+- hosts: web
+  tasks:
+    - name: docker yum repositiry
+      yum_repository:
+        name: docker-repo
+        baseurl:  https://download.docker.com/linux/centos/7/x86_64/stable/
+        enabled: true
+        description:  my docker repo
+        gpgcheck: no
+    - name: Install docker software
+      command: "yum install docker-ce  -y --nobest"
+    - name: start docker service
+      service:
+        name: "docker"
+        state: started
+    - name: install software python36
+      package:
+        name: python36
+        state: present
+    - name: install docker python librery
+      pip:
+        name: docker-py
+    - name: pull docker images
+      docker_image:
+        name: httpd
+        source: pull
+    - name: Creating a directory to copy html code
+      file:
+        path: "/htmpPage"
+        state: directory
+    - name: Copy the code
+      copy:
+        src:  "home.html"
+        dest: "/htmpPage"
+    - name: run container
+      docker_container:
+        name: web1
+        image: httpd
+        state: started
+        exposed_ports: 
+          - "80"
+        ports:
+          - "1234:80"
+        volumes:
+          - /htmpPage:/usr/local/apache2/htdocs/
